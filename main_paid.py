@@ -19,8 +19,8 @@ import stock_timing as engine
 
 
 # ローカル運用：stock_timing.py を 8502 で起動しておく
-# Webで同一アプリ内ページにする場合は、例：DETAIL_BASE_URL = "/stock_timing"
-DETAIL_BASE_URL = "http://localhost:8502"
+# Webで同一アプリ内ページにする場合は、例：DETAIL_BASE_URL = "https://dividend-stock-tool-app-3747amibf23otamsq7sda7.streamlit.app"
+DETAIL_BASE_URL = "https://dividend-stock-tool-app-3747amibf23otamsq7sda7.streamlit.app"
 
 # JPX公式「東証上場銘柄一覧」Excel
 # 公式ページ: https://www.jpx.co.jp/markets/statistics-equities/misc/01.html
@@ -77,6 +77,26 @@ def num(x) -> str:
 def detail_url(ticker: str) -> str:
     base = DETAIL_BASE_URL.rstrip("/")
     return f"{base}/?ticker={quote(ticker)}"
+
+
+def render_detail_buttons(view: pd.DataFrame) -> None:
+    """検索結果の下に、確実に詳細ページへ飛べるボタンを表示する。"""
+    if view.empty:
+        return
+
+    st.markdown("### 詳細を開く")
+    for _, row in view.iterrows():
+        ticker = str(row.get("銘柄コード", ""))
+        judgment = str(row.get("総合判定", ""))
+        url = str(row.get("詳細", ""))
+
+        if not url or url == "-":
+            continue
+
+        c1, c2, c3 = st.columns([1.2, 1.2, 5])
+        c1.write(ticker)
+        c2.write(judgment)
+        c3.link_button("この銘柄を詳細表示", url, use_container_width=True)
 
 
 # -----------------------------
@@ -331,6 +351,8 @@ def main() -> None:
                 "エラー": st.column_config.TextColumn("エラー", width="medium"),
             },
         )
+
+        render_detail_buttons(view)
 
         st.download_button(
             "結果CSVを保存",

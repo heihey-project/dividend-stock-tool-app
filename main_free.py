@@ -20,7 +20,7 @@ import stock_timing as engine
 
 # ローカル運用：stock_timing.py を 8502 で起動しておく
 # Web公開時に pages/stock_timing.py 構成へ移す場合は、環境に合わせて変更
-DETAIL_BASE_URL = "http://localhost:8502"
+DETAIL_BASE_URL = "https://dividend-stock-tool-app-3747amibf23otamsq7sda7.streamlit.app"
 
 FREE_MAX_TICKERS = 10
 
@@ -68,6 +68,26 @@ def num(x) -> str:
 def detail_url(ticker: str) -> str:
     base = DETAIL_BASE_URL.rstrip("/")
     return f"{base}/?ticker={quote(ticker)}"
+
+
+def render_detail_buttons(view: pd.DataFrame) -> None:
+    """検索結果の下に、確実に詳細ページへ飛べるボタンを表示する。"""
+    if view.empty:
+        return
+
+    st.markdown("### 詳細を開く")
+    for _, row in view.iterrows():
+        ticker = str(row.get("銘柄コード", ""))
+        judgment = str(row.get("総合判定", ""))
+        url = str(row.get("詳細", ""))
+
+        if not url or url == "-":
+            continue
+
+        c1, c2, c3 = st.columns([1.2, 1.2, 5])
+        c1.write(ticker)
+        c2.write(judgment)
+        c3.link_button("この銘柄を詳細表示", url, use_container_width=True)
 
 
 # -----------------------------
@@ -233,6 +253,8 @@ def main() -> None:
                     "エラー": st.column_config.TextColumn("エラー", width="medium"),
                 },
             )
+
+            render_detail_buttons(buy_view)
 
         with st.expander("有料版で開放される機能"):
             st.write("・全銘柄検索")
